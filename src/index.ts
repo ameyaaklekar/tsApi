@@ -5,9 +5,7 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as helmet from "helmet";
 import * as cors from "cors";
-import {Request, Response} from "express";
 import routes from "./routes";
-import {User} from "./entity/User";
 
 createConnection({
     type: "mysql",

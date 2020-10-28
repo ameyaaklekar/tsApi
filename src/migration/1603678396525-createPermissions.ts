@@ -173,6 +173,7 @@ export class createPermissions1603678396525 implements MigrationInterface {
     user.lastName = "Aklekar";
     user.email = "ameyaaklekar@gmail.com";
     user.password = "Ameya1993";
+    user.hashPassword();
     user.countryCode = 64;
     user.phoneNumber = 224116255;
     user.company = company;
