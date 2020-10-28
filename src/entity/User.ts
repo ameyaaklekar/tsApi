@@ -16,64 +16,37 @@ export class User extends BaseEntity {
   @Column()
   lastName: string;
 
-  @Column({
-    unique: true
-  })
+  @Column({ unique: true })
   email: string;
 
-  @Column({
-    type: "datetime",
-    nullable: true
-  })
+  @Column({ type: "datetime", nullable: true })
   emailVarifiedAt: string;
 
   @Column()
   password: string;
 
-  @Column({
-    type: "int",
-  })
+  @Column({ type: "int" })
   countryCode: number;
   
-  @Column({
-    type: "int",
-  })
+  @Column({ type: "int" })
   phoneNumber: number;
 
-  @Column({ 
-    nullable: true,
-    length: 100
-   })
+  @Column({ nullable: true, length: 100 })
   address: string;
 
-  @Column({ 
-    nullable: true,
-    length: 100
-  })
+  @Column({ nullable: true, length: 100 })
   state: string;
 
-  @Column({ 
-    nullable: true,
-    length: 100
-  })
+  @Column({ nullable: true, length: 100 })
   city: string;
 
-  @Column({ 
-    nullable: true,
-    length: 100
-  })
+  @Column({ nullable: true, length: 100 })
   country: string;
 
-  @Column({ 
-    nullable: true,
-    length: 10
-  })
+  @Column({ nullable: true, length: 10 })
   postalCode: string;
   
-  @Column({
-    type: "datetime",
-    nullable: true
-  })
+  @Column({ type: "datetime", nullable: true })
   passwordChangedAt: string;
 
   @ManyToOne(() => Company, company => company.users)
