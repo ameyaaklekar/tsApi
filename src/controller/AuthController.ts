@@ -2,6 +2,7 @@ import * as Joi from '@hapi/joi';
 import { Request, Response } from 'express';
 import { getRepository } from 'typeorm';
 import { Company } from '../entity/Company';
+import { Role } from '../entity/Role';
 import { User } from '../entity/User';
 import { ResponseHelper } from '../helpers/ResponseHelper';
 
@@ -22,6 +23,10 @@ export const registrationValidator = Joi.object({
   password: Joi.string().min(8).required().empty(),
   password_confirmation: Joi.any().valid(Joi.ref("password")).messages({
     "any.only": `"Password" does not match`,
+  }),
+  robot: Joi.string().empty().messages({
+    "string.base": `"Google Reptcha: Required`,
+    "string.empty": `"Google Reptcha: Required`,
   })
 })
 
@@ -45,7 +50,7 @@ export class AuthController {
           name: companyName
         }
       }).catch(error => {
-        ResponseHelper.send401(response, error.details)
+        ResponseHelper.send500(response, error.details)
         return
       })
   
@@ -61,7 +66,7 @@ export class AuthController {
           email: email
         }
       }).catch(error => {
-        ResponseHelper.send401(response, error.details)
+        ResponseHelper.send500(response, error.details)
         return
       })
   
@@ -69,6 +74,13 @@ export class AuthController {
         ResponseHelper.send422(response, {}, "User already exist.")
         return
       }
+
+      let roleRepo = getRepository(Role);
+      let admin = await roleRepo.findOne({
+          where: {
+              codeName: "admin"
+          }
+      });
   
       let company = new Company();
       let user = new User();
@@ -84,6 +96,7 @@ export class AuthController {
       user.countryCode = countryCode;
       user.phoneNumber = phoneNumber;
       user.company = company;
+      user.roles = [admin];
         
       await companyRepo.save(company).catch(error => {
         ResponseHelper.send500(response, error.message, "Something went wrong")

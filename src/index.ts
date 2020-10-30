@@ -23,7 +23,15 @@ createConnection({
     // create express app
     const app = express();
     app.use(helmet());
-    app.use(cors());
+
+    app.use(cors({
+        "origin": "*",
+        "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+        "preflightContinue": false,
+        "optionsSuccessStatus": 204
+    }));
+    
+    app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
 
     app.use("/api", routes);
