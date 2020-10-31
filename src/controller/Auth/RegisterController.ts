@@ -10,18 +10,46 @@ import * as httpRequest from 'request';
 export const registrationValidator = Joi.object({
   company: {
     name: Joi.string().max(20).required().empty().messages({
-      "string.base": `"Company Name" is not valid.`,
-      "string.max": `"Company Name" is too long.`,
-      "string.required": `"Company Name" is required.`,
-      "string.empty": `"Company Name" is required.`,
+      "string.base": `Company Name is not valid.`,
+      "string.max": `Company Name is too long.`,
+      "string.required": `Company Name is required.`,
+      "string.empty": `Company Name is required.`,
     })
   },
-  firstName: Joi.string().max(20).required().empty(),
-  lastName: Joi.string().max(20).required().empty(),
-  countryCode: Joi.number().integer().required().empty(),
-  phoneNumber: Joi.number().integer().required().empty(),
-  email: Joi.string().required().email().empty(),
-  password: Joi.string().min(8).required().empty(),
+  firstName: Joi.string().max(20).required().empty().messages({
+    "string.base": `Firstname is not valid.`,
+    "string.max": `Firstname is too long.`,
+    "string.required": `Firstname is required.`,
+    "string.empty": `Firstname is required.`,
+  }),
+  lastName: Joi.string().max(20).required().empty().messages({
+    "string.base": `Lastname is not valid.`,
+    "string.max": `Lastname is too long.`,
+    "string.required": `Lastname is required.`,
+    "string.empty": `Lastname is required.`,
+  }),
+  countryCode: Joi.number().integer().required().empty().messages({
+    "number.base": `Country code is not valid.`,
+    "number.required": `Country code is required.`,
+    "number.empty": `Country code is required.`,
+  }),
+  phoneNumber: Joi.number().integer().required().empty().messages({
+    "number.base": `Phone number is not valid.`,
+    "number.required": `Phone number is required.`,
+    "number.empty": `Phone number is required.`,
+  }),
+  email: Joi.string().required().email().empty().messages({
+    "string.base": `Email is not valid.`,
+    "string.max": `Email is too long.`,
+    "string.required": `Email is required.`,
+    "string.empty": `Email is required.`,
+  }),
+  password: Joi.string().min(8).required().empty().messages({
+    "string.base": `Password is not valid.`,
+    "string.min": `Minimum 8 words Password is required.`,
+    "string.required": `Password is required.`,
+    "string.empty": `Password is required.`,
+  }),
   password_confirmation: Joi.any().valid(Joi.ref("password")).messages({
     "any.only": `"Password" does not match`,
   }),
@@ -35,7 +63,9 @@ export class AuthController {
   
   static register = async (request: Request, response: Response) => {
 
-    let sanitizedInput = await registrationValidator.validateAsync(request.body).catch(error => {
+    let sanitizedInput = await registrationValidator.validateAsync(request.body, {
+      abortEarly: false,
+    }).catch(error => {
       ResponseHelper.send422(response, error.details)
       return
     });
