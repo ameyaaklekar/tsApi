@@ -112,18 +112,14 @@ export class AuthController {
       user.phoneNumber = phoneNumber;
       user.company = company;
       user.roles = [admin];
-        
-      await companyRepo.save(company).catch(error => {
+      
+      try {
+        await companyRepo.save(company);
+        let newUser = await userRepo.save(user);
+        ResponseHelper.send200(response, newUser, "User added successfully")
+      } catch (error) {
         ResponseHelper.send500(response, error.message, "Something went wrong")
-        return
-      });
-  
-      let newUser = await userRepo.save(user).catch(error => {
-        ResponseHelper.send500(response, error.message, "Something went wrong")
-        return
-      });
-  
-      ResponseHelper.send200(response, newUser, "User added successfully")
+      }
     }
   }
 }
