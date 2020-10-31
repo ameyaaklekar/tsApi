@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, JoinTable } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, JoinTable, getRepository } from "typeorm";
 import { Company } from "./Company";
 import { Role } from './Role';
 import { Permission } from './Permission';
@@ -68,5 +68,16 @@ export class User extends BaseEntity {
 
   checkIfPasswordIsValid(rawPassword: string) {
     return bcrypt.compareSync(rawPassword, this.password);
+  }
+
+  async getPermissions() {
+    let roleRepo = getRepository(Role)
+    let role = await roleRepo.findOneOrFail({
+      where: {
+        id: this.roles[0].id
+      },
+      relations: ["permissions"]
+    })
+    return this.permissions = [...this.permissions, ...role.permissions]
   }
 }
