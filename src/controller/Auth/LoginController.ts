@@ -20,13 +20,27 @@ const loginValidator = Joi.object({
   })
 })
 
+/**
+ * Controller to handle the login requests
+ *
+ * @export
+ * @class LoginController
+ */
 export class LoginController {
-  static login = async (request: Request, response: Response) => {
+
+  /**
+   * Function to handle the login
+   * Returns Access Token
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof LoginController
+   */
+  public login = async (request: Request, response: Response) => {
     let sanitizedInput = await loginValidator.validateAsync(request.body, {
       abortEarly: false
     }).catch(error => {
-      ResponseHelper.send401(response, error.details)
-      return
+      return ResponseHelper.send401(response, error.details)
     });
 
     if (sanitizedInput) {
@@ -41,12 +55,11 @@ export class LoginController {
           }
         })
       } catch (error) {
-        ResponseHelper.send401(response, error, "User does not exist")
+        return ResponseHelper.send401(response, error, "User does not exist")
       }
 
       if (!user.checkIfPasswordIsValid(password)) {
-        ResponseHelper.send401(response, {}, "Invalid email or password")
-        return
+        return ResponseHelper.send401(response, {}, "Invalid email or password")
       }
 
       let token = jwt.sign(
@@ -59,14 +72,18 @@ export class LoginController {
           expiresIn:  process.env.TOKEN_LIFE 
         }
       )
+      
+      let decodedToken = jwt.decode(token);
 
       let tokenRepo = getRepository(AuthAccessToken)
       let accessToken = new AuthAccessToken()
       accessToken.id = token
       accessToken.user = user
+      accessToken.expireAt = new Date(decodedToken["exp"] * 1000)
+      accessToken.lastLogin = new Date()
       tokenRepo.save(accessToken)
 
-      ResponseHelper.send200(response, token)
+      return ResponseHelper.send200(response, token)
     }
   }
 }

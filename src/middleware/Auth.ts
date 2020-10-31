@@ -5,6 +5,13 @@ import { ResponseHelper } from '../helpers/ResponseHelper';
 import { getRepository } from 'typeorm';
 import { AuthAccessToken } from '../entity/AuthAccessToken';
 
+/**
+ * Middleware to Authenticate the User Access Token
+ * 
+ * @param request 
+ * @param response 
+ * @param next 
+ */
 export const Auth = async (request: Request, response: Response, next: NextFunction) => {
   let authHeader = request.headers.authorization;
   let token = authHeader && authHeader.split(' ')[1]

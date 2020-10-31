@@ -59,16 +59,28 @@ export const registrationValidator = Joi.object({
   })
 })
 
-export class AuthController {
+/**
+ * Controller to handle register request
+ *
+ * @export
+ * @class RegisterController
+ */
+export class RegisterController {
   
-  static register = async (request: Request, response: Response) => {
+  /**
+   * Function to register a new user
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof RegisterController
+   */
+  public register = async (request: Request, response: Response) => {
 
     let sanitizedInput = await registrationValidator.validateAsync(request.body, {
       abortEarly: false,
       stripUnknown: true
     }).catch(error => {
-      ResponseHelper.send422(response, error.details)
-      return
+      return ResponseHelper.send422(response, error.details)
     });
 
     if (sanitizedInput) {
@@ -81,8 +93,7 @@ export class AuthController {
         body = JSON.parse(body);
         // Success will be true or false depending upon captcha validation.
         if (body.success !== undefined && !body.success) {
-          ResponseHelper.send422(response, {}, "Failed captcha verification")
-          return
+          return ResponseHelper.send422(response, {}, "Failed captcha verification")
         }
       });
 
@@ -96,13 +107,11 @@ export class AuthController {
           name: companyName
         }
       }).catch(error => {
-        ResponseHelper.send500(response, error.details)
-        return
+        return ResponseHelper.send500(response, error.details)
       })
   
       if (companyExist) {
-        ResponseHelper.send422(response, {}, "Company name already exist.")
-        return
+        return ResponseHelper.send422(response, {}, "Company name already exist.")
       }
   
       let userRepo = getRepository(User);
@@ -112,13 +121,11 @@ export class AuthController {
           email: email
         }
       }).catch(error => {
-        ResponseHelper.send500(response, error.details)
-        return
+        return ResponseHelper.send500(response, error.details)
       })
   
       if (userExist) {
-        ResponseHelper.send422(response, {}, "User already exist.")
-        return
+        return ResponseHelper.send422(response, {}, "User already exist.")
       }
 
       let roleRepo = getRepository(Role);
@@ -147,9 +154,9 @@ export class AuthController {
       try {
         await companyRepo.save(company);
         let newUser = await userRepo.save(user);
-        ResponseHelper.send200(response, newUser, "User added successfully")
+        return ResponseHelper.send200(response, newUser, "User added successfully")
       } catch (error) {
-        ResponseHelper.send500(response, error.message, "Something went wrong")
+        return ResponseHelper.send500(response, error.message, "Something went wrong")
       }
     }
   }

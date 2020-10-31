@@ -4,6 +4,11 @@ import { Role } from '../entity/Role';
 import { User } from '../entity/User';
 import { ResponseHelper } from '../helpers/ResponseHelper';
 
+/**
+ * Middleware to Authenticate the user permissions to perform an action
+ * 
+ * @param permission 
+ */
 export const Permissions = (permission: String) => {
   return async (request: Request, response: Response, next: NextFunction) => {
     let userRepo = getRepository(User);

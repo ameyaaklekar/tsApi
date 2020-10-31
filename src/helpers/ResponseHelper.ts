@@ -18,7 +18,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send = (response: Response, code: number = 200 , body: {}) => {
-    response.status(code).send(body);
+    return response.status(code).send(body);
   }
 
   /**
@@ -56,7 +56,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send200 = (response: Response, data: any = {}, message: string = "Success") => {
-    ResponseHelper.send(response, 200, ResponseHelper.getBody(true, data, message))
+    return ResponseHelper.send(response, 200, ResponseHelper.getBody(true, data, message))
   }
 
   /**
@@ -69,7 +69,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send201 = (response: Response, data: any = {}, message: string = "Created") => {
-    ResponseHelper.send(response, 201, ResponseHelper.getBody(true, data, message))
+    return ResponseHelper.send(response, 201, ResponseHelper.getBody(true, data, message))
 
   }
 
@@ -83,7 +83,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send204 = (response: Response, data: any = {}, message: string = "No Content") => {
-    ResponseHelper.send(response, 204, ResponseHelper.getBody(true, data, message))
+    return ResponseHelper.send(response, 204, ResponseHelper.getBody(true, data, message))
   }
 
   /**
@@ -96,7 +96,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send401 = (response: Response, data: any = {}, message: string = "Unauthorised") => {
-    ResponseHelper.send(response, 401, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 401, ResponseHelper.getBody(false, data, message))
 
   }
 
@@ -110,7 +110,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send403 = (response: Response, data: any = {}, message: string = "Forbidden") => {
-    ResponseHelper.send(response, 403, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 403, ResponseHelper.getBody(false, data, message))
   }
 
   /**
@@ -123,7 +123,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send404 = (response: Response, data: any = {}, message: string = "Not Found") => {
-    ResponseHelper.send(response, 404, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 404, ResponseHelper.getBody(false, data, message))
   }
 
   /**
@@ -136,7 +136,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send406 = (response: Response, data: any = {}, message: string = "Not Acceptable") => {
-    ResponseHelper.send(response, 406, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 406, ResponseHelper.getBody(false, data, message))
   }
 
   /**
@@ -149,7 +149,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send422 = (response: Response, data: any = {}, message: string = "Unprocessable Entity") => {
-    ResponseHelper.send(response, 422, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 422, ResponseHelper.getBody(false, data, message))
   }
 
   /**
@@ -162,7 +162,7 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send500 = (response: Response, data: any = {}, message: string = "Internal Server Error") => {
-    ResponseHelper.send(response, 500, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 500, ResponseHelper.getBody(false, data, message))
   }
 
   /**
@@ -175,6 +175,6 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send503 = (response: Response, data: any = {}, message: string = "Service Unavailable") => {
-    ResponseHelper.send(response, 503, ResponseHelper.getBody(false, data, message))
+    return ResponseHelper.send(response, 503, ResponseHelper.getBody(false, data, message))
   }
 }

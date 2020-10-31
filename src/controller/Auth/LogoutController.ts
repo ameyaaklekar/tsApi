@@ -4,13 +4,25 @@ import { getRepository } from 'typeorm';
 import { AuthAccessToken } from '../../entity/AuthAccessToken';
 import { User } from '../../entity/User';
 
-
+/**
+ * Controller to handle logout request
+ *
+ * @export
+ * @class LogoutController
+ */
 export class LogoutController {
-  static logout = async (request: Request, response: Response) => {
+
+  /**
+   * Function to handle the logout 
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof LogoutController
+   */
+  public logout = async (request: Request, response: Response) => {
 
     let authTokenRepo = getRepository(AuthAccessToken);
     authTokenRepo.delete({ user: request.body.user.id })
-    ResponseHelper.send204(response, {}, "Successfully signed out")
-
+    return ResponseHelper.send204(response, {}, "Successfully signed out")
   }
 }

@@ -13,8 +13,14 @@ export class AuthAccessToken {
   revoked: boolean;
 
   @CreateDateColumn()
-  createdAt: string;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updateAt: string;
+  updateAt: Date;
+
+  @Column({ type: "datetime" })
+  lastLogin: Date;
+
+  @Column({ type: "datetime" })
+  expireAt: Date;
 }

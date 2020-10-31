@@ -5,6 +5,7 @@ import { getRepository, Not } from 'typeorm';
 import { Role } from '../../entity/Role';
 import { User } from '../../entity/User';
 import { ResponseHelper } from '../../helpers/ResponseHelper';
+import { BaseController } from '../BaseController';
 
 export const userValidation = Joi.object({
   firstName: Joi.string().max(20).required().empty().messages({
@@ -67,9 +68,47 @@ export const userValidation = Joi.object({
   }),
 })
 
-export class UserController {
+/**
+ * User Controller to handle the user requests
+ *
+ * @export
+ * @class UserController
+ * @extends {BaseController}
+ */
+export class UserController extends BaseController {
 
-  static getUser = async (request: Request, response: Response) => {
+  /**
+   * Function to get all the users
+   * Probably will be used for the Admin Side
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof UserController
+   */
+  public all = async (request: Request, response: Response) => {
+    return ResponseHelper.send404(response);
+  }
+
+  /**
+   * Function to create a new user
+   * Probably will be used for the Admin side
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof UserController
+   */
+  public create = async (request: Request, response: Response) => {
+    return ResponseHelper.send404(response);
+  }
+
+  /**
+   * Function to read the user
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof UserController
+   */
+  public read = async (request: Request, response: Response) => {
     let userRepo = getRepository(User)
     let roleRepo = getRepository(Role)
     try {
@@ -86,7 +125,14 @@ export class UserController {
     }
   }
 
-  static updateUser = async (request: Request, response: Response) => {
+  /**
+   * Function to update the user
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof UserController
+   */
+  public update = async (request: Request, response: Response) => {
 
     let sanitizedInput = await userValidation.validateAsync(request.body, {
       abortEarly: false,
@@ -129,5 +175,17 @@ export class UserController {
     await userRepo.save(user);
     
     return ResponseHelper.send200(response, user);
-  } 
+  }
+
+  /**
+   * Function to delete the user
+   * In our case change the status of the user to D
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof UserController
+   */
+  public delete = async (request: Request, response: Response) => {
+    return ResponseHelper.send404(response);
+  }
 }
