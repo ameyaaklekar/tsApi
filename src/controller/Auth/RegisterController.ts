@@ -74,7 +74,7 @@ export class AuthController {
     if (sanitizedInput) {
 
       //Google Recaptcha verification
-      let secretKey = process.env.SECRET;
+      let secretKey = process.env.RECAPTCHA_SECRET;
       let verificationUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" + secretKey + "&response=" + request.body.robot + "&remoteip=" + request.connection.remoteAddress;
 
       httpRequest(verificationUrl,function(error,res,body) {
