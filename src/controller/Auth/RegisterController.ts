@@ -51,9 +51,9 @@ export const registrationValidator = Joi.object({
     "string.empty": `Password is required.`,
   }),
   password_confirmation: Joi.any().valid(Joi.ref("password")).messages({
-    "any.only": `"Password" does not match`,
+    "any.only": `Password does not match`,
   }),
-  robot: Joi.string().empty().messages({
+  robot: Joi.string().messages({
     "string.base": `"Google Reptcha: Required`,
     "string.empty": `"Google Reptcha: Required`,
   })
@@ -65,6 +65,7 @@ export class AuthController {
 
     let sanitizedInput = await registrationValidator.validateAsync(request.body, {
       abortEarly: false,
+      stripUnknown: true
     }).catch(error => {
       ResponseHelper.send422(response, error.details)
       return
