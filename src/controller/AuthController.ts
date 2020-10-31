@@ -5,6 +5,7 @@ import { Company } from '../entity/Company';
 import { Role } from '../entity/Role';
 import { User } from '../entity/User';
 import { ResponseHelper } from '../helpers/ResponseHelper';
+import * as httpRequest from 'request';
 
 export const registrationValidator = Joi.object({
   company: {
@@ -40,6 +41,20 @@ export class AuthController {
     });
 
     if (sanitizedInput) {
+
+      //Google Recaptcha verification
+      let secretKey = process.env.SECRET;
+      let verificationUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" + secretKey + "&response=" + request.body.robot + "&remoteip=" + request.connection.remoteAddress;
+
+      httpRequest(verificationUrl,function(error,res,body) {
+        body = JSON.parse(body);
+        // Success will be true or false depending upon captcha validation.
+        if (body.success !== undefined && !body.success) {
+          ResponseHelper.send422(response, {}, "Failed captcha verification")
+          return
+        }
+      });
+
       let companyName = sanitizedInput.company.name;
       let { firstName, lastName, email, password, countryCode, phoneNumber } = sanitizedInput;
   
