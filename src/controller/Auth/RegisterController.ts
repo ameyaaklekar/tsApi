@@ -1,10 +1,10 @@
 import * as Joi from '@hapi/joi';
 import { Request, Response } from 'express';
 import { getRepository } from 'typeorm';
-import { Company } from '../entity/Company';
-import { Role } from '../entity/Role';
-import { User } from '../entity/User';
-import { ResponseHelper } from '../helpers/ResponseHelper';
+import { Company } from '../../entity/Company';
+import { Role } from '../../entity/Role';
+import { User } from '../../entity/User';
+import { ResponseHelper } from '../../helpers/ResponseHelper';
 import * as httpRequest from 'request';
 
 export const registrationValidator = Joi.object({
