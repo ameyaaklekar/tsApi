@@ -20,9 +20,15 @@ export class LogoutController {
    * @memberof LogoutController
    */
   public logout = async (request: Request, response: Response) => {
+    let authHeader = request.headers.authorization;
+    let token = authHeader && authHeader.split(' ')[1]
 
     let authTokenRepo = getRepository(AuthAccessToken);
-    authTokenRepo.delete({ user: request.body.user.id })
+    authTokenRepo.delete({ 
+      id: token,
+      user: request.body.user.id
+    })
+
     return ResponseHelper.send204(response, {}, "Successfully signed out")
   }
 }

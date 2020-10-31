@@ -23,4 +23,7 @@ export class AuthAccessToken {
 
   @Column({ type: "datetime" })
   expireAt: Date;
+
+  @Column({ nullable: true })
+  device: string
 }

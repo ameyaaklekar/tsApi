@@ -25,7 +25,8 @@ export const Auth = async (request: Request, response: Response, next: NextFunct
     let authToken = await authTokenRepo.findOne({
       where: {
         id: token,
-        user: user['id']
+        user: user['id'],
+        revoked: 0
       }
     });
 
