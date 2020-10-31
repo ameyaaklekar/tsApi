@@ -24,6 +24,7 @@
       "jsonwebtoken": "^8.5.1",
       "mysql2": "^2.2.5",
       "reflect-metadata": "^0.1.13",
+      "request": "^2.88.2",
       "ts-node-dev": "^1.0.0",
       "typeorm": "0.2.28"
    },

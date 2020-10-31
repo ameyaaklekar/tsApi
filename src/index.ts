@@ -5,9 +5,7 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as helmet from "helmet";
 import * as cors from "cors";
-import {Request, Response} from "express";
 import routes from "./routes";
-import {User} from "./entity/User";
 
 createConnection({
     type: "mysql",
@@ -25,7 +23,15 @@ createConnection({
     // create express app
     const app = express();
     app.use(helmet());
-    app.use(cors());
+
+    app.use(cors({
+        "origin": "*",
+        "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+        "preflightContinue": false,
+        "optionsSuccessStatus": 204
+    }));
+    
+    app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
 
     app.use("/api", routes);

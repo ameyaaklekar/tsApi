@@ -3,6 +3,7 @@ import { Company } from "./Company";
 import { Role } from './Role';
 import { Permission } from './Permission';
 import { BaseEntity } from "./BaseEntity";
+import * as bcrypt from "bcryptjs";
 
 @Entity({ name: "user" })
 export class User extends BaseEntity {
@@ -59,4 +60,13 @@ export class User extends BaseEntity {
   @ManyToMany(() => Permission)
   @JoinTable()
   permissions: Permission[];
+
+  hashPassword() {
+    let salt = bcrypt.genSaltSync(10);
+    this.password = bcrypt.hashSync(this.password, salt);
+  }
+
+  checkIfPasswordIsValid(rawPassword: string) {
+    return bcrypt.compareSync(rawPassword, this.password);
+  }
 }
