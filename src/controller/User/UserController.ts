@@ -110,7 +110,6 @@ export class UserController extends BaseController {
    */
   public read = async (request: Request, response: Response) => {
     let userRepo = getRepository(User)
-    let roleRepo = getRepository(Role)
     try {
       let user = await userRepo.findOneOrFail({
         where: {
@@ -118,8 +117,11 @@ export class UserController extends BaseController {
         },
         relations: ['company', 'roles', 'permissions']
       })
-      user.getPermissions();
-      return ResponseHelper.send200(response, user)      
+
+      await user.getPermissions();
+
+      return ResponseHelper.send200(response, user)
+      
     } catch (error) {
       return ResponseHelper.send403(response, error)
     }
