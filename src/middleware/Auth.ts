@@ -22,13 +22,12 @@ export const Auth = async (request: Request, response: Response, next: NextFunct
     if (error) return ResponseHelper.send403(response)
     
     let authTokenRepo = getRepository(AuthAccessToken);
-    let authToken = await authTokenRepo.findOne({
-      where: {
-        id: token,
-        user: user['id'],
-        revoked: 0
-      }
-    });
+
+    let authToken = await authTokenRepo.createQueryBuilder('auth_access_token')
+      .innerJoinAndSelect('auth_access_token.user', 'user')
+      .where('token = :token', { token })
+      .where('user.status = :status', { status: "A" })
+      .getOne()
 
     if (!authToken) return ResponseHelper.send403(response)
     request.body.user = user;

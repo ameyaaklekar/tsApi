@@ -51,7 +51,8 @@ export class LoginController {
       try {
         user = await userRepo.findOneOrFail({
           where: {
-            email: email
+            email: email,
+            status: 'A'
           }
         })
       } catch (error) {

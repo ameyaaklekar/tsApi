@@ -32,37 +32,31 @@ export const userValidation = Joi.object({
   }),
   email: Joi.string().required().email().empty().messages({
     "string.base": `Email is not valid.`,
-    "string.max": `Email is too long.`,
     "string.required": `Email is required.`,
     "string.empty": `Email is required.`,
   }),
   address: Joi.string().required().empty().messages({
     "string.base": `Address is not valid.`,
-    "string.max": `Address is too long.`,
     "string.required": `Address is required.`,
     "string.empty": `Address is required.`,
   }),
   city: Joi.string().required().empty().messages({
     "string.base": `City is not valid.`,
-    "string.max": `City is too long.`,
     "string.required": `City is required.`,
     "string.empty": `City is required.`,
   }),
   state: Joi.string().required().empty().messages({
     "string.base": `State is not valid.`,
-    "string.max": `State is too long.`,
     "string.required": `State is required.`,
     "string.empty": `State is required.`,
   }),
   country: Joi.string().required().empty().messages({
     "string.base": `Country is not valid.`,
-    "string.max": `Country is too long.`,
     "string.required": `Country is required.`,
     "string.empty": `Country is required.`,
   }),
   postalCode: Joi.string().required().empty().messages({
     "string.base": `Postal code is not valid.`,
-    "string.max": `Postal code is too long.`,
     "string.required": `Postal code is required.`,
     "string.empty": `Postal code is required.`,
   }),
