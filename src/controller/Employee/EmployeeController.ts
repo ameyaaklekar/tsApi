@@ -203,26 +203,23 @@ export class EmployeeController extends BaseController {
       abortEarly: false,
       allowUnknown: true
     }).catch(error => {
-      ResponseHelper.send422(response, error.details, "Invalid details provided")
-      return
+      return ResponseHelper.send422(response, error.details, "Invalid details provided")
     });
 
     let userRepo = getRepository(User)
     let roleRepo = getRepository(Role)
-
-    let user = await userRepo.findOneOrFail({
-      where: {
-        id: request.body.user.id
-      },
-      relations: ['company']
-    })
-
-    let checkIfEmailExist = await userRepo.find({
-      where: {
-        email: sanitizedInput.email,
-        id: Not(request.body.employeeId)
-      }
-    })
+    
+    let checkIfEmailExist:User[]
+    try {
+       checkIfEmailExist = await userRepo.find({
+        where: {
+          email: sanitizedInput.email,
+          id: Not(request.body.employeeId)
+        }
+      })
+    } catch (error) {
+      return ResponseHelper.send500(response, error)
+    }
 
     if (checkIfEmailExist.length > 0) return ResponseHelper.send422(response, {}, "Email already exist")
     
@@ -235,8 +232,7 @@ export class EmployeeController extends BaseController {
         relations: ['permissions']
       })
     } catch (error) {
-      ResponseHelper.send422(response, error.details, "Please select a valid role")
-      return
+      return ResponseHelper.send422(response, error.details, "Please select a valid role")
     }
     
 
@@ -252,50 +248,54 @@ export class EmployeeController extends BaseController {
       additionalPermissions.splice(index, 1);
     })
     
-    let employee = await userRepo.findOne({
-      where: {
-        id: request.body.employeeId
-      },
-      relations: ['roles', 'permissions']
-    })
-
-    await userRepo.createQueryBuilder()
-      .relation(User, "roles")
-      .of(employee)
-      .remove(employee.roles)
-
-    await userRepo.createQueryBuilder()
-      .relation(User, "permissions")
-      .of(employee)
-      .remove(employee.permissions)
-
-    employee.firstName = sanitizedInput.firstName
-    employee.lastName = sanitizedInput.lastName
-    employee.countryCode = sanitizedInput.countryCode
-    employee.phoneNumber = sanitizedInput.phoneNumber
-    employee.email = sanitizedInput.email
-    employee.address = sanitizedInput.address
-    employee.city = sanitizedInput.city
-    employee.state = sanitizedInput.state
-    employee.country = sanitizedInput.country
-    employee.postalCode = sanitizedInput.postalCode
-    employee.roles = [role]
-
-    if (additionalPermissions.length > 0) {
-      let permissionRepo = getRepository(Permission);
-      let permissons = await permissionRepo.find({
+    try {
+      let employee = await userRepo.findOne({
         where: {
-          codeName: In(additionalPermissions)
-        }
+          id: request.body.employeeId
+        },
+        relations: ['roles', 'permissions']
       })
-
-      if (permissons.length > 0) employee.permissions = permissons
-    } else {
-      employee.permissions = []
+  
+      await userRepo.createQueryBuilder()
+        .relation(User, "roles")
+        .of(employee)
+        .remove(employee.roles)
+  
+      await userRepo.createQueryBuilder()
+        .relation(User, "permissions")
+        .of(employee)
+        .remove(employee.permissions)
+  
+      employee.firstName = sanitizedInput.firstName
+      employee.lastName = sanitizedInput.lastName
+      employee.countryCode = sanitizedInput.countryCode
+      employee.phoneNumber = sanitizedInput.phoneNumber
+      employee.email = sanitizedInput.email
+      employee.address = sanitizedInput.address
+      employee.city = sanitizedInput.city
+      employee.state = sanitizedInput.state
+      employee.country = sanitizedInput.country
+      employee.postalCode = sanitizedInput.postalCode
+      employee.roles = [role]
+  
+      if (additionalPermissions.length > 0) {
+        let permissionRepo = getRepository(Permission);
+        let permissons = await permissionRepo.find({
+          where: {
+            codeName: In(additionalPermissions)
+          }
+        })
+  
+        if (permissons.length > 0) employee.permissions = permissons
+      } else {
+        employee.permissions = []
+      }
+  
+      let updatedUser = userRepo.save(employee)
+      return ResponseHelper.send200(response, updatedUser)
+    } catch (error) {
+      return ResponseHelper.send500(response, error)
     }
-
-    let updatedUser = userRepo.save(employee)
-    return ResponseHelper.send200(response, updatedUser);
   }
 
   public delete = async (request: Request, response: Response) => {
