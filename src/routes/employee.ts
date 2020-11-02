@@ -9,5 +9,6 @@ const router = Router();
 router.get('/', Permissions(permissionsConstants.VIEW_EMPLOYEE), employeeController.all)
 router.post('/', Permissions(permissionsConstants.ADD_EMPLOYEE), employeeController.create)
 router.get('/:id', Permissions(permissionsConstants.UPDATE_EMPLOYEE), employeeController.read)
+router.put('/', Permissions(permissionsConstants.UPDATE_EMPLOYEE), employeeController.update)
 
 export default router;

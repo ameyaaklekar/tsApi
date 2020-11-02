@@ -2,7 +2,7 @@ import { BaseController } from "../BaseController";
 import { Request, Response } from 'express';
 import { ResponseHelper } from "../../helpers/ResponseHelper";
 import Joi = require("@hapi/joi");
-import { getRepository, In } from 'typeorm';
+import { getRepository, In, Not } from 'typeorm';
 import { User } from "../../entity/User";
 import { Role } from '../../entity/Role';
 import { Permission } from '../../entity/Permission';
@@ -111,8 +111,6 @@ export class EmployeeController extends BaseController {
       }
     })
 
-    console.log(checkIfEmailExist);
-
     if (checkIfEmailExist.length > 0) return ResponseHelper.send422(response, {}, "Email already exist")
     
     let role: Role
@@ -201,7 +199,103 @@ export class EmployeeController extends BaseController {
   }
 
   public update = async (request: Request, response: Response) => {
-    return ResponseHelper.send404(response);
+    let sanitizedInput = await employeeValidation.validateAsync(request.body, {
+      abortEarly: false,
+      allowUnknown: true
+    }).catch(error => {
+      ResponseHelper.send422(response, error.details, "Invalid details provided")
+      return
+    });
+
+    let userRepo = getRepository(User)
+    let roleRepo = getRepository(Role)
+
+    let user = await userRepo.findOneOrFail({
+      where: {
+        id: request.body.user.id
+      },
+      relations: ['company']
+    })
+
+    let checkIfEmailExist = await userRepo.find({
+      where: {
+        email: sanitizedInput.email,
+        id: Not(request.body.employeeId)
+      }
+    })
+
+    if (checkIfEmailExist.length > 0) return ResponseHelper.send422(response, {}, "Email already exist")
+    
+    let role: Role
+    try {
+      role = await roleRepo.findOneOrFail({
+        where: {
+          codeName: sanitizedInput.role
+        },
+        relations: ['permissions']
+      })
+    } catch (error) {
+      ResponseHelper.send422(response, error.details, "Please select a valid role")
+      return
+    }
+    
+
+    let rolePermissions = role.permissions
+
+    let additionalPermissions = [];
+    sanitizedInput.permissions.forEach((permission: Array<String>) => 
+      additionalPermissions.push(permission)
+    );
+
+    rolePermissions.forEach(permission => {
+      let index = additionalPermissions.indexOf(permission.codeName);
+      additionalPermissions.splice(index, 1);
+    })
+    
+    let employee = await userRepo.findOne({
+      where: {
+        id: request.body.employeeId
+      },
+      relations: ['roles', 'permissions']
+    })
+
+    await userRepo.createQueryBuilder()
+      .relation(User, "roles")
+      .of(employee)
+      .remove(employee.roles)
+
+    await userRepo.createQueryBuilder()
+      .relation(User, "permissions")
+      .of(employee)
+      .remove(employee.permissions)
+
+    employee.firstName = sanitizedInput.firstName
+    employee.lastName = sanitizedInput.lastName
+    employee.countryCode = sanitizedInput.countryCode
+    employee.phoneNumber = sanitizedInput.phoneNumber
+    employee.email = sanitizedInput.email
+    employee.address = sanitizedInput.address
+    employee.city = sanitizedInput.city
+    employee.state = sanitizedInput.state
+    employee.country = sanitizedInput.country
+    employee.postalCode = sanitizedInput.postalCode
+    employee.roles = [role]
+
+    if (additionalPermissions.length > 0) {
+      let permissionRepo = getRepository(Permission);
+      let permissons = await permissionRepo.find({
+        where: {
+          codeName: In(additionalPermissions)
+        }
+      })
+
+      if (permissons.length > 0) employee.permissions = permissons
+    } else {
+      employee.permissions = []
+    }
+
+    let updatedUser = userRepo.save(employee)
+    return ResponseHelper.send200(response, updatedUser);
   }
 
   public delete = async (request: Request, response: Response) => {
