@@ -18,7 +18,11 @@ export class ResponseHelper {
    * @memberof ResponseHelper
    */
   static send = (response: Response, code: number = 200 , body: {}) => {
-    return response.status(code).send(body);
+    try {
+      return response.status(code).send(body);
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   /**
@@ -30,7 +34,7 @@ export class ResponseHelper {
    * @param {string} [message=""]
    * @memberof ResponseHelper
    */
-  static getBody = (success: boolean, data: any = {}, message: string = "") => {
+  static getBody = (success: boolean, data: any = {}, message: string = "", validationError: boolean = false) => {
     if (success) {
       return {
         success: success,
@@ -38,9 +42,19 @@ export class ResponseHelper {
         message: message
       }
     } else {
+      let errorArray = {};
+      if (validationError) {
+        for (let i = 0; i < data.length; i++) {
+          let key = data[i].path[0]
+          errorArray[key] = data[i].message
+        }
+      } else {
+        errorArray = data
+      }
+
       return {
         success: success,
-        errors: (data.length) ? data : { message: message },
+        errors: (errorArray !== null) ? errorArray : { message: message },
         message: message
       }
     }
@@ -148,8 +162,8 @@ export class ResponseHelper {
    * @param {string} [message="Unprocessable Entity"]
    * @memberof ResponseHelper
    */
-  static send422 = (response: Response, data: any = {}, message: string = "Unprocessable Entity") => {
-    return ResponseHelper.send(response, 422, ResponseHelper.getBody(false, data, message))
+  static send422 = (response: Response, data: any = {}, message: string = "Unprocessable Entity", validationError: boolean = false) => {
+    return ResponseHelper.send(response, 422, ResponseHelper.getBody(false, data, message, validationError))
   }
 
   /**

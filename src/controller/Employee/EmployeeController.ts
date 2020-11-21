@@ -79,7 +79,7 @@ export class EmployeeController extends BaseController {
         }
       })
 
-      ResponseHelper.send200(response, employees)
+      return ResponseHelper.send200(response, employees)
     } catch (error) {
       return ResponseHelper.send500(response, error);
     }
@@ -87,50 +87,58 @@ export class EmployeeController extends BaseController {
 
   public create = async (request: Request, response: Response) => {
 
-    let sanitizedInput = await employeeValidation.validateAsync(request.body, {
+    let sanitizedInput = employeeValidation.validate(request.body, {
       abortEarly: false,
       allowUnknown: true
-    }).catch(error => {
-      ResponseHelper.send422(response, error.details, "Invalid details provided")
-      return
-    });
+    })
 
+    if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
+ 
     let userRepo = getRepository(User)
     let roleRepo = getRepository(Role)
 
-    let user = await userRepo.findOneOrFail({
-      where: {
-        id: request.body.user.id
-      },
-      relations: ['company']
-    })
+    let user: User
 
-    let checkIfEmailExist = await userRepo.find({
-      where: {
-        email: sanitizedInput.email
-      }
-    })
-
+    try {
+      user = await userRepo.findOneOrFail({
+        where: {
+          id: request.body.user.id
+        },
+        relations: ['company']
+      })
+    } catch (error) {
+      return ResponseHelper.send422(response, error.details, "Invalid User")
+    }
+    
+    let checkIfEmailExist: User[]
+    try {
+      checkIfEmailExist = await userRepo.find({
+        where: {
+          email: sanitizedInput.value.email
+        }
+      })
+    } catch (error) {
+      return ResponseHelper.send422(response, error.details, "Something went wrong")
+    }
+    
     if (checkIfEmailExist.length > 0) return ResponseHelper.send422(response, {}, "Email already exist")
     
     let role: Role
     try {
       role = await roleRepo.findOneOrFail({
         where: {
-          codeName: sanitizedInput.role
+          codeName: sanitizedInput.value.role
         },
         relations: ['permissions']
       })
     } catch (error) {
-      ResponseHelper.send422(response, error.details, "Please select a valid role")
-      return
+      return ResponseHelper.send422(response, error.details, "Please select a valid role")
     }
     
-
     let rolePermissions = role.permissions
 
     let additionalPermissions = [];
-    sanitizedInput.permissions.forEach((permission: Array<String>) => additionalPermissions.push(permission));
+    sanitizedInput.value.permissions.forEach((permission: Array<String>) => additionalPermissions.push(permission));
 
     rolePermissions.forEach(permission => {
       let index = additionalPermissions.indexOf(permission.codeName);
@@ -139,18 +147,18 @@ export class EmployeeController extends BaseController {
 
     try {
       let employee = new User();
-      employee.firstName = sanitizedInput.firstName
-      employee.lastName = sanitizedInput.lastName
-      employee.countryCode = sanitizedInput.countryCode
-      employee.phoneNumber = sanitizedInput.phoneNumber
-      employee.email = sanitizedInput.email
+      employee.firstName = sanitizedInput.value.firstName
+      employee.lastName = sanitizedInput.value.lastName
+      employee.countryCode = sanitizedInput.value.countryCode
+      employee.phoneNumber = sanitizedInput.value.phoneNumber
+      employee.email = sanitizedInput.value.email
       employee.password = process.env.NEW_USER_PASSWORD
       employee.hashPassword()
-      employee.address = sanitizedInput.address
-      employee.city = sanitizedInput.city
-      employee.state = sanitizedInput.state
-      employee.country = sanitizedInput.country
-      employee.postalCode = sanitizedInput.postalCode
+      employee.address = sanitizedInput.value.address
+      employee.city = sanitizedInput.value.city
+      employee.state = sanitizedInput.value.state
+      employee.country = sanitizedInput.value.country
+      employee.postalCode = sanitizedInput.value.postalCode
       employee.roles = [role]
       employee.company = user.company
   
@@ -199,21 +207,22 @@ export class EmployeeController extends BaseController {
   }
 
   public update = async (request: Request, response: Response) => {
-    let sanitizedInput = await employeeValidation.validateAsync(request.body, {
+    let sanitizedInput = employeeValidation.validate(request.body, {
       abortEarly: false,
       allowUnknown: true
-    }).catch(error => {
-      return ResponseHelper.send422(response, error.details, "Invalid details provided")
     });
+
+    if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
 
     let userRepo = getRepository(User)
     let roleRepo = getRepository(Role)
     
     let checkIfEmailExist:User[]
+
     try {
        checkIfEmailExist = await userRepo.find({
         where: {
-          email: sanitizedInput.email,
+          email: sanitizedInput.value.email,
           id: Not(request.body.employeeId)
         }
       })
@@ -227,7 +236,7 @@ export class EmployeeController extends BaseController {
     try {
       role = await roleRepo.findOneOrFail({
         where: {
-          codeName: sanitizedInput.role
+          codeName: sanitizedInput.value.role
         },
         relations: ['permissions']
       })
@@ -235,11 +244,10 @@ export class EmployeeController extends BaseController {
       return ResponseHelper.send422(response, error.details, "Please select a valid role")
     }
     
-
     let rolePermissions = role.permissions
 
     let additionalPermissions = [];
-    sanitizedInput.permissions.forEach((permission: Array<String>) => 
+    sanitizedInput.value.permissions.forEach((permission: Array<String>) => 
       additionalPermissions.push(permission)
     );
 
@@ -266,16 +274,16 @@ export class EmployeeController extends BaseController {
         .of(employee)
         .remove(employee.permissions)
   
-      employee.firstName = sanitizedInput.firstName
-      employee.lastName = sanitizedInput.lastName
-      employee.countryCode = sanitizedInput.countryCode
-      employee.phoneNumber = sanitizedInput.phoneNumber
-      employee.email = sanitizedInput.email
-      employee.address = sanitizedInput.address
-      employee.city = sanitizedInput.city
-      employee.state = sanitizedInput.state
-      employee.country = sanitizedInput.country
-      employee.postalCode = sanitizedInput.postalCode
+      employee.firstName = sanitizedInput.value.firstName
+      employee.lastName = sanitizedInput.value.lastName
+      employee.countryCode = sanitizedInput.value.countryCode
+      employee.phoneNumber = sanitizedInput.value.phoneNumber
+      employee.email = sanitizedInput.value.email
+      employee.address = sanitizedInput.value.address
+      employee.city = sanitizedInput.value.city
+      employee.state = sanitizedInput.value.state
+      employee.country = sanitizedInput.value.country
+      employee.postalCode = sanitizedInput.value.postalCode
       employee.roles = [role]
   
       if (additionalPermissions.length > 0) {
