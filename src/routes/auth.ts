@@ -4,8 +4,8 @@ import { registerController, loginController, logoutController } from "../contro
 
 const router = Router();
 
-router.post('/register', registerController.register);
-router.post('/login', loginController.login);
-router.post('/logout', Auth, logoutController.logout);
+router.post('/register', registerController.register)
+  .post('/login', loginController.login)
+  .post('/logout', Auth, logoutController.logout)
 
 export default router;

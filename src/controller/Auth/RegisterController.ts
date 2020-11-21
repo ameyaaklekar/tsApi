@@ -50,7 +50,7 @@ export const registrationValidator = Joi.object({
     "string.required": `Password is required.`,
     "string.empty": `Password is required.`,
   }),
-  password_confirmation: Joi.any().valid(Joi.ref("password")).messages({
+  confirmPassword: Joi.any().valid(Joi.ref("password")).messages({
     "any.only": `Password does not match`,
   }),
   robot: Joi.string().messages({
@@ -76,88 +76,86 @@ export class RegisterController {
    */
   public register = async (request: Request, response: Response) => {
 
-    let sanitizedInput = await registrationValidator.validateAsync(request.body, {
+    let sanitizedInput = registrationValidator.validate(request.body, {
       abortEarly: false,
       stripUnknown: true
-    }).catch(error => {
-      return ResponseHelper.send422(response, error.details)
+    })
+
+    if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
+
+
+    //Google Recaptcha verification
+    let secretKey = process.env.RECAPTCHA_SECRET;
+    let verificationUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" + secretKey + "&response=" + request.body.robot + "&remoteip=" + request.connection.remoteAddress;
+
+    httpRequest(verificationUrl,function(error,res,body) {
+      body = JSON.parse(body);
+      // Success will be true or false depending upon captcha validation.
+      if (body.success !== undefined && !body.success) {
+        return ResponseHelper.send422(response, {}, "Failed captcha verification")
+      }
     });
 
-    if (sanitizedInput) {
+    let companyName = sanitizedInput.value.company.name;
+    let { firstName, lastName, email, password, countryCode, phoneNumber } = sanitizedInput.value;
 
-      //Google Recaptcha verification
-      let secretKey = process.env.RECAPTCHA_SECRET;
-      let verificationUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" + secretKey + "&response=" + request.body.robot + "&remoteip=" + request.connection.remoteAddress;
+    let companyRepo = getRepository(Company);
 
-      httpRequest(verificationUrl,function(error,res,body) {
-        body = JSON.parse(body);
-        // Success will be true or false depending upon captcha validation.
-        if (body.success !== undefined && !body.success) {
-          return ResponseHelper.send422(response, {}, "Failed captcha verification")
-        }
-      });
+    let companyExist = await companyRepo.findOne({
+      where: {
+        name: companyName
+      }
+    }).catch(error => {
+      return ResponseHelper.send500(response, error.details)
+    })
 
-      let companyName = sanitizedInput.company.name;
-      let { firstName, lastName, email, password, countryCode, phoneNumber } = sanitizedInput;
-  
-      let companyRepo = getRepository(Company);
-  
-      let companyExist = await companyRepo.findOne({
+    if (companyExist) {
+      return ResponseHelper.send422(response, {}, "Company name already exist.")
+    }
+
+    let userRepo = getRepository(User);
+
+    let userExist = await userRepo.findOne({
+      where: {
+        email: email
+      }
+    }).catch(error => {
+      return ResponseHelper.send500(response, error.details)
+    })
+
+    if (userExist) {
+      return ResponseHelper.send422(response, {}, "User already exist.")
+    }
+
+    let roleRepo = getRepository(Role);
+    let admin = await roleRepo.findOne({
         where: {
-          name: companyName
+            codeName: "admin"
         }
-      }).catch(error => {
-        return ResponseHelper.send500(response, error.details)
-      })
-  
-      if (companyExist) {
-        return ResponseHelper.send422(response, {}, "Company name already exist.")
-      }
-  
-      let userRepo = getRepository(User);
-  
-      let userExist = await userRepo.findOne({
-        where: {
-          email: email
-        }
-      }).catch(error => {
-        return ResponseHelper.send500(response, error.details)
-      })
-  
-      if (userExist) {
-        return ResponseHelper.send422(response, {}, "User already exist.")
-      }
+    });
 
-      let roleRepo = getRepository(Role);
-      let admin = await roleRepo.findOne({
-          where: {
-              codeName: "admin"
-          }
-      });
-  
-      let company = new Company();
-      let user = new User();
-  
-      company.name = companyName;
-      company.displayName = companyName;
-  
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.email = email;
-      user.password = password;
-      user.hashPassword();
-      user.countryCode = countryCode;
-      user.phoneNumber = phoneNumber;
-      user.company = company;
-      user.roles = [admin];
-      
-      try {
-        await companyRepo.save(company);
-        let newUser = await userRepo.save(user);
-        return ResponseHelper.send200(response, newUser, "User added successfully")
-      } catch (error) {
-        return ResponseHelper.send500(response, error.message, "Something went wrong")
-      }
+    let company = new Company();
+    let user = new User();
+
+    company.name = companyName;
+    company.displayName = companyName;
+
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.email = email;
+    user.password = password;
+    user.hashPassword();
+    user.countryCode = countryCode;
+    user.phoneNumber = phoneNumber;
+    user.company = company;
+    user.roles = [admin];
+    
+    try {
+      await companyRepo.save(company);
+      let newUser = await userRepo.save(user);
+      return ResponseHelper.send200(response, newUser, "User added successfully")
+    } catch (error) {
+      return ResponseHelper.send500(response, error.message, "Something went wrong")
     }
   }
 }
