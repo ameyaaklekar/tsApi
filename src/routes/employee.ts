@@ -9,5 +9,6 @@ router.get('/', Permissions(permissionsConstants.VIEW_EMPLOYEE), employeeControl
   .post('/', Permissions(permissionsConstants.ADD_EMPLOYEE), employeeController.create)
   .get('/:id', Permissions(permissionsConstants.UPDATE_EMPLOYEE), employeeController.read)
   .put('/', Permissions(permissionsConstants.UPDATE_EMPLOYEE), employeeController.update)
+  .patch('/', Permissions(permissionsConstants.UPDATE_EMPLOYEE), employeeController.changeStatus)
 
 export default router;

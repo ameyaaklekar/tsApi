@@ -130,13 +130,12 @@ export class UserController extends BaseController {
    */
   public update = async (request: Request, response: Response) => {
 
-    let sanitizedInput = await userValidation.validateAsync(request.body, {
+    let sanitizedInput = userValidation.validate(request.body, {
       abortEarly: false,
       allowUnknown: true
-    }).catch(error => {
-      ResponseHelper.send422(response, error.details)
-      return
     });
+
+    if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
 
     let userRepo = getRepository(User)
     let user = await userRepo.findOneOrFail({
@@ -146,27 +145,26 @@ export class UserController extends BaseController {
       relations: ['company', 'roles', 'permissions']
     })
 
-    if (user.email !== sanitizedInput.email) {
-      let checkIfEmailExist = await userRepo.findAndCount({
+    if (user.email !== sanitizedInput.value.email) {
+      let checkIfEmailExist = await userRepo.find({
         where: {
-          email: sanitizedInput.email,
-          id: Not(sanitizedInput.user.id)
+          email: sanitizedInput.value.email,
+          id: Not(sanitizedInput.value.user.id)
         }
       })
-      
       if (checkIfEmailExist.length > 0) return ResponseHelper.send422(response, {}, "Email already exist")
     }
 
-    user.firstName = sanitizedInput.firstName
-    user.lastName = sanitizedInput.lastName
-    user.countryCode = sanitizedInput.countryCode
-    user.phoneNumber = sanitizedInput.phoneNumber
-    user.email = sanitizedInput.email
-    user.address = sanitizedInput.address
-    user.city = sanitizedInput.city
-    user.state = sanitizedInput.state
-    user.country = sanitizedInput.country
-    user.postalCode = sanitizedInput.postalCode
+    user.firstName = sanitizedInput.value.firstName
+    user.lastName = sanitizedInput.value.lastName
+    user.countryCode = sanitizedInput.value.countryCode
+    user.phoneNumber = sanitizedInput.value.phoneNumber
+    user.email = sanitizedInput.value.email
+    user.address = sanitizedInput.value.address
+    user.city = sanitizedInput.value.city
+    user.state = sanitizedInput.value.state
+    user.country = sanitizedInput.value.country
+    user.postalCode = sanitizedInput.value.postalCode
     user.getPermissions();
     await userRepo.save(user);
     

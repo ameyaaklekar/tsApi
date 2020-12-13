@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, JoinTable, getRepository } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable, getRepository, In } from "typeorm";
 import { Company } from "./Company";
 import { Role } from './Role';
 import { Permission } from './Permission';
@@ -79,5 +79,20 @@ export class User extends BaseEntity {
       relations: ["permissions"]
     })
     return this.permissions = [...this.permissions, ...role.permissions]
+  }
+
+  async setPermissions(userPermissions: any) {
+    if (userPermissions.length > 0) {
+      let permissionRepo = getRepository(Permission);
+      let permissons = await permissionRepo.find({
+        where: {
+          codeName: In(userPermissions)
+        }
+      })
+
+      if (permissons.length > 0) this.permissions = permissons
+    } else {
+      this.permissions = []
+    }
   }
 }

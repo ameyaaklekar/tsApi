@@ -1,74 +1,36 @@
 import { BaseController } from "../BaseController";
 import { Request, Response } from 'express';
 import { ResponseHelper } from "../../helpers/ResponseHelper";
-import Joi = require("@hapi/joi");
-import { getRepository, In, Not } from 'typeorm';
+import { getCustomRepository } from 'typeorm';
 import { User } from "../../entity/User";
 import { Role } from '../../entity/Role';
-import { Permission } from '../../entity/Permission';
+import { Status } from "../../entity/BaseEntity";
+import { RolePermissionsHelper } from '../../helpers/RolePermissionsHelper';
+import { employeeStatusValidation, employeeValidation } from "../../validations/EmployeeValidation";
+import { UserRepository } from '../../repository/UserRepository';
+import { RolesRepository } from "../../repository/RolesRepository";
+import { PermissionsRepository } from '../../repository/PermissionsRepository';
 
-export const employeeValidation = Joi.object({
-  firstName: Joi.string().max(20).required().empty().messages({
-    "string.base": `Firstname is not valid.`,
-    "string.max": `Firstname is too long.`,
-    "string.required": `Firstname is required.`,
-    "string.empty": `Firstname is required.`,
-  }),
-  lastName: Joi.string().max(20).required().empty().messages({
-    "string.base": `Lastname is not valid.`,
-    "string.max": `Lastname is too long.`,
-    "string.required": `Lastname is required.`,
-    "string.empty": `Lastname is required.`,
-  }),
-  countryCode: Joi.number().integer().required().empty().messages({
-    "number.base": `Country code is not valid.`,
-    "number.required": `Country code is required.`,
-    "number.empty": `Country code is required.`,
-  }),
-  phoneNumber: Joi.number().integer().required().empty().messages({
-    "number.base": `Phone number is not valid.`,
-    "number.required": `Phone number is required.`,
-    "number.empty": `Phone number is required.`,
-  }),
-  email: Joi.string().required().email().empty().messages({
-    "string.base": `Email is not valid.`,
-    "string.required": `Email is required.`,
-    "string.empty": `Email is required.`,
-  }),
-  address: Joi.string().allow(null, '').messages({
-    "string.base": `Address is not valid.`,
-  }),
-  city: Joi.string().allow(null, '').messages({
-    "string.base": `City is not valid.`,
-  }),
-  state: Joi.string().allow(null, '').messages({
-    "string.base": `State is not valid.`,
-  }),
-  country: Joi.string().allow(null, '').messages({
-    "string.base": `Country is not valid.`,
-  }),
-  postalCode: Joi.string().allow(null, '').messages({
-    "string.base": `Postal code is not valid.`,
-  }),
-  role: Joi.string().required().empty().messages({
-    "string.base": `Role is not valid.`,
-    "string.required": `Role is required.`,
-    "string.empty": `Role is required.`,
-  }),
-  permissions: Joi.array().required().empty()
-})
-
+/**
+ * Controller to handle Employee requests
+ *
+ * @export
+ * @class EmployeeController
+ * @extends {BaseController}
+ */
 export class EmployeeController extends BaseController {
+  
+  /**
+   * Gets all the employees of a company
+   * 
+   * @param request 
+   * @param response 
+   */
   public all = async (request: Request, response: Response) => {
-    let userRepo = getRepository(User)
+    let userRepo = getCustomRepository(UserRepository)
 
     try {
-      let user = await userRepo.findOneOrFail({
-        where: {
-          id: request.body.user.id
-        },
-        relations: ['company'],
-      })
+      let user = await userRepo.findOneById(request.body.user.id)
   
       let employees = await userRepo.find({
         where: {
@@ -85,6 +47,13 @@ export class EmployeeController extends BaseController {
     }
   }
 
+  /**
+   * Handles the POST request to create a new employee
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof EmployeeController
+   */
   public create = async (request: Request, response: Response) => {
 
     let sanitizedInput = employeeValidation.validate(request.body, {
@@ -94,29 +63,20 @@ export class EmployeeController extends BaseController {
 
     if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
  
-    let userRepo = getRepository(User)
-    let roleRepo = getRepository(Role)
+    let userRepo = getCustomRepository(UserRepository)
+    let roleRepo = getCustomRepository(RolesRepository)
 
     let user: User
 
     try {
-      user = await userRepo.findOneOrFail({
-        where: {
-          id: request.body.user.id
-        },
-        relations: ['company']
-      })
+      user = await userRepo.findOneById(request.body.user.id)
     } catch (error) {
       return ResponseHelper.send422(response, error.details, "Invalid User")
     }
     
     let checkIfEmailExist: User[]
     try {
-      checkIfEmailExist = await userRepo.find({
-        where: {
-          email: sanitizedInput.value.email
-        }
-      })
+      checkIfEmailExist = await userRepo.checkIfExist(sanitizedInput.value.email, request.body.employeeId)
     } catch (error) {
       return ResponseHelper.send422(response, error.details, "Something went wrong")
     }
@@ -125,26 +85,13 @@ export class EmployeeController extends BaseController {
     
     let role: Role
     try {
-      role = await roleRepo.findOneOrFail({
-        where: {
-          codeName: sanitizedInput.value.role
-        },
-        relations: ['permissions']
-      })
+      role = await roleRepo.findOneByCodeName(sanitizedInput.value.role)
     } catch (error) {
       return ResponseHelper.send422(response, error.details, "Please select a valid role")
     }
     
-    let rolePermissions = role.permissions
-
-    let additionalPermissions = [];
-    sanitizedInput.value.permissions.forEach((permission: Array<String>) => additionalPermissions.push(permission));
-
-    rolePermissions.forEach(permission => {
-      let index = additionalPermissions.indexOf(permission.codeName);
-      additionalPermissions.splice(index, 1);
-    })
-
+    let additionalPermissions = RolePermissionsHelper.sortRoleAndPermissions(role, sanitizedInput.value.permissions);
+    
     try {
       let employee = new User();
       employee.firstName = sanitizedInput.value.firstName
@@ -163,12 +110,8 @@ export class EmployeeController extends BaseController {
       employee.company = user.company
   
       if (additionalPermissions.length > 0) {
-        let permissionRepo = getRepository(Permission);
-        let permissons = await permissionRepo.find({
-          where: {
-            codeName: In(additionalPermissions)
-          }
-        })
+        let permissionRepo = getCustomRepository(PermissionsRepository);
+        let permissons = await permissionRepo.getPermissionsByCodeName(additionalPermissions)
   
         if (permissons.length > 0) employee.permissions = permissons
       }
@@ -181,31 +124,31 @@ export class EmployeeController extends BaseController {
     }
   }
 
+  /**
+   * Handles a GET request to get one employee
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof EmployeeController
+   */
   public read = async (request: Request, response: Response) => {
-    let userRepo = getRepository(User)
+    let userRepo = getCustomRepository(UserRepository)
     try {
-      let user = await userRepo.findOneOrFail({
-        where: {
-          id: request.body.user.id
-        },
-        relations: ['company']
-      })
-
-      let employee = await userRepo.findOne({
-        where: {
-          id: request.params.id
-        },
-        relations: ['company', 'roles', 'permissions']
-      })
+      const employee = await userRepo.findOneById(request.params.id)
       await employee.getPermissions()
-
       return ResponseHelper.send200(response, employee)
-      
     } catch (error) {
       return ResponseHelper.send403(response, error)
     }
   }
 
+  /**
+   * Handles UPDATE request to update the employee details/Role/Permission
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof EmployeeController
+   */
   public update = async (request: Request, response: Response) => {
     let sanitizedInput = employeeValidation.validate(request.body, {
       abortEarly: false,
@@ -214,18 +157,12 @@ export class EmployeeController extends BaseController {
 
     if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
 
-    let userRepo = getRepository(User)
-    let roleRepo = getRepository(Role)
+    let userRepo = getCustomRepository(UserRepository)
+    let roleRepo = getCustomRepository(RolesRepository)
     
-    let checkIfEmailExist:User[]
-
+    let checkIfEmailExist : User[]
     try {
-       checkIfEmailExist = await userRepo.find({
-        where: {
-          email: sanitizedInput.value.email,
-          id: Not(request.body.employeeId)
-        }
-      })
+      checkIfEmailExist = await userRepo.checkIfExist(sanitizedInput.value.email, request.body.employeeId)
     } catch (error) {
       return ResponseHelper.send500(response, error)
     }
@@ -234,35 +171,15 @@ export class EmployeeController extends BaseController {
     
     let role: Role
     try {
-      role = await roleRepo.findOneOrFail({
-        where: {
-          codeName: sanitizedInput.value.role
-        },
-        relations: ['permissions']
-      })
+      role = await roleRepo.findOneByCodeName(sanitizedInput.value.role)
     } catch (error) {
       return ResponseHelper.send422(response, error.details, "Please select a valid role")
     }
-    
-    let rolePermissions = role.permissions
 
-    let additionalPermissions = [];
-    sanitizedInput.value.permissions.forEach((permission: Array<String>) => 
-      additionalPermissions.push(permission)
-    );
+    let employeePermissions = RolePermissionsHelper.sortRoleAndPermissions(role, sanitizedInput.value.permissions)
 
-    rolePermissions.forEach(permission => {
-      let index = additionalPermissions.indexOf(permission.codeName);
-      additionalPermissions.splice(index, 1);
-    })
-    
     try {
-      let employee = await userRepo.findOne({
-        where: {
-          id: request.body.employeeId
-        },
-        relations: ['roles', 'permissions']
-      })
+      let employee = await userRepo.findOneById(request.body.employeeId)
   
       await userRepo.createQueryBuilder()
         .relation(User, "roles")
@@ -285,22 +202,10 @@ export class EmployeeController extends BaseController {
       employee.country = sanitizedInput.value.country
       employee.postalCode = sanitizedInput.value.postalCode
       employee.roles = [role]
+      employee.setPermissions(employeePermissions)
   
-      if (additionalPermissions.length > 0) {
-        let permissionRepo = getRepository(Permission);
-        let permissons = await permissionRepo.find({
-          where: {
-            codeName: In(additionalPermissions)
-          }
-        })
-  
-        if (permissons.length > 0) employee.permissions = permissons
-      } else {
-        employee.permissions = []
-      }
-  
-      let updatedUser = userRepo.save(employee)
-      return ResponseHelper.send200(response, updatedUser)
+      let updatedUser = await userRepo.save(employee)
+      return ResponseHelper.send200(response, updatedUser, "Employee Updated Successfully")
     } catch (error) {
       return ResponseHelper.send500(response, error)
     }
@@ -308,5 +213,44 @@ export class EmployeeController extends BaseController {
 
   public delete = async (request: Request, response: Response) => {
     return ResponseHelper.send404(response);
+  }
+
+  /**
+   * Handles PUT request to update the stattus of the employee
+   *
+   * @param {Request} request
+   * @param {Response} response
+   * @memberof EmployeeController
+   */
+  public changeStatus = async (request: Request, response: Response) => {
+    let sanitizedInput = employeeStatusValidation.validate(request.body, {
+      abortEarly: false,
+      allowUnknown: true
+    })
+
+    if (sanitizedInput.error) return ResponseHelper.send422(response, sanitizedInput.error.details, "Invalid input provided", true)
+
+    let userRepo = getCustomRepository(UserRepository)
+    let user: User
+    try {
+      user = await userRepo.findOneById(request.body.user.id)
+    } catch (error) {
+      return ResponseHelper.send422(response, error.details, "Invalid User")
+    }
+
+    try {
+      let employee = await userRepo.findOne({
+        where: {
+          id: sanitizedInput.value.employeeId,
+          company: user.company
+        }
+      })
+
+      employee.status = (sanitizedInput.value.status === 'A') ? Status.ACTIVE : Status.INACTIVE
+      let updatedUser = await userRepo.save(employee)
+      return ResponseHelper.send200(response, updatedUser, 'Employee status changed successfully')
+    } catch (error) {
+      return ResponseHelper.send422(response, error.details, "Employee was not found")
+    }
   }
 }
