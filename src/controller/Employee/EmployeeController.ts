@@ -76,7 +76,7 @@ export class EmployeeController extends BaseController {
     
     let checkIfEmailExist: User[]
     try {
-      checkIfEmailExist = await userRepo.checkIfExist(sanitizedInput.value.email, request.body.employeeId)
+      checkIfEmailExist = await userRepo.checkIfExist(sanitizedInput.value.email, request.body.user.id)
     } catch (error) {
       return ResponseHelper.send422(response, error.details, "Something went wrong")
     }
