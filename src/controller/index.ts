@@ -6,6 +6,7 @@ import { RoleController } from './Role/RoleController';
 import { PermissionContoller } from './Permission/PermissionController';
 import { EmployeeController } from './Employee/EmployeeController';
 import { CompanyController } from './Company/CompanyController';
+import { SupplierController } from './Supplier/SupplierController';
 
 const registerController = new RegisterController()
 const loginController = new LoginController()
@@ -15,6 +16,7 @@ const roleController = new RoleController()
 const permissionController = new PermissionContoller()
 const employeeController = new EmployeeController()
 const companyController = new CompanyController()
+const supplierController = new SupplierController()
 
 export {
   registerController,
@@ -24,5 +26,6 @@ export {
   roleController,
   permissionController,
   employeeController,
-  companyController
+  companyController,
+  supplierController
 }

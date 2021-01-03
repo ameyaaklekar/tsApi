@@ -6,6 +6,7 @@ import roleRoute from "./role";
 import permissionRoute from "./permission";
 import employeeRoute from "./employee";
 import companyRoute from "./company";
+import supplierRoute from "./supplier";
 
 const routes = Router();
 
@@ -15,5 +16,6 @@ routes.use("/role", Auth, roleRoute);
 routes.use("/permission", Auth, permissionRoute);
 routes.use("/employee", Auth, employeeRoute);
 routes.use("/company", Auth, companyRoute);
+routes.use("/supplier", Auth, supplierRoute);
 
 export default routes;
