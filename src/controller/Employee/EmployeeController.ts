@@ -38,7 +38,8 @@ export class EmployeeController extends BaseController {
         },
         order: {
           createdAt: "ASC"
-        }
+        },
+        relations: ['roles']
       })
 
       return ResponseHelper.send200(response, employees)
