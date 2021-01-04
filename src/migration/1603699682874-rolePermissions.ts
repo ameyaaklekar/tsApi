@@ -63,6 +63,14 @@ export class rolePermissions1603699682874 implements MigrationInterface {
             'viewSupplier',
             'updateSupplier',
             'deleteSupplier',
+            'addStockProduct',
+            'viewStockProduct',
+            'updateStockProduct',
+            'deleteStockProduct',
+            'addStockCategory',
+            'viewStockCategory',
+            'updateStockCategory',
+            'deleteStockCategory',
         ];
 
         let permissionRepo = getRepository(Permission);
@@ -92,7 +100,12 @@ export class rolePermissions1603699682874 implements MigrationInterface {
             'viewCompany',
             'updateProfile',
             'viewStock',
+            'addStock',
+            'updateStock',
+            'deleteStock',
             'viewSupplier',
+            'viewStockCategory',
+            'viewStockProduct',
         ];
 
         let managerPermission = await permissionRepo.find({
@@ -114,7 +127,10 @@ export class rolePermissions1603699682874 implements MigrationInterface {
             'viewPermissions',
             'viewRoles',
             'viewCompany',
-            'updateProfile'
+            'updateProfile',
+            'viewStock',
+            'viewSupplier',
+            'viewStockCategory',
         ];
 
         let supervisorPermission = await permissionRepo.find({

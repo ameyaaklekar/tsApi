@@ -135,6 +135,38 @@ export class createPermissions1603678396525 implements MigrationInterface {
         display_name: 'Delete Stock',
       },
       {
+        name: 'addStockProduct',
+        display_name: 'Add Stock Product',
+      },
+      {
+        name: 'viewStockProduct',
+        display_name: 'View Stock Product',
+      },
+      {
+        name: 'updateStockProduct',
+        display_name: 'Edit Stock Product',
+      },
+      {
+        name: 'deleteStockProduct',
+        display_name: 'Delete Stock Product',
+      },
+      {
+        name: 'addStockCategory',
+        display_name: 'Add Stock Category',
+      },
+      {
+        name: 'viewStockCategory',
+        display_name: 'View Stock Category',
+      },
+      {
+        name: 'updateStockCategory',
+        display_name: 'Edit Stock Category',
+      },
+      {
+        name: 'deleteStockCategory',
+        display_name: 'Delete Stock Category',
+      },
+      {
         name: 'addSupplier',
         display_name: 'Add Supplier',
       },
